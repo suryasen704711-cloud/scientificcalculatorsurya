@@ -1,0 +1,263 @@
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Surya's Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg1:#ffe0b8;--bg2:#ffa9c6;--glow:#ffd24d;--card:rgba(255,255,255,.55);
+  --text:#2a1245;--sub:#7a5a8f;--disp:rgba(255,255,255,.8);--ring:rgba(120,60,160,.25);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg1:#170c36;--bg2:#5a1a66;--glow:#ff7a3c;--card:rgba(255,255,255,.08);
+    --text:#fff;--sub:#cdbbea;--disp:rgba(10,4,30,.55);--ring:rgba(255,255,255,.14);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg1:#170c36;--bg2:#5a1a66;--glow:#ff7a3c;--card:rgba(255,255,255,.08);
+  --text:#fff;--sub:#cdbbea;--disp:rgba(10,4,30,.55);--ring:rgba(255,255,255,.14);
+  color-scheme:dark;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{
+  margin:0;min-height:100%;display:grid;place-items:center;padding:20px 14px;
+  font-family:"Poppins",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(70% 45% at 50% 105%,var(--glow) 0%,transparent 70%),
+    linear-gradient(160deg,var(--bg1),var(--bg2));
+  background-color:var(--bg1);
+}
+.calc{
+  width:min(100%,390px);padding:18px;border-radius:30px;background:var(--card);
+  border:1px solid var(--ring);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  box-shadow:0 24px 60px rgba(60,10,90,.35);
+}
+header{display:flex;align-items:center;gap:10px;margin:2px 4px 14px}
+header svg{width:38px;height:38px;flex:none}
+h1{margin:0;font-size:1.15rem;font-weight:700;line-height:1.1;
+  background:linear-gradient(90deg,#f97316,#ec4899,#8b5cf6);-webkit-background-clip:text;background-clip:text;color:transparent}
+header small{display:block;color:var(--sub);font-size:.72rem;font-weight:500}
+.modes{margin-left:auto;display:flex;gap:6px}
+.pill{
+  font:600 .72rem "Poppins",system-ui,sans-serif;padding:6px 11px;border-radius:999px;cursor:pointer;
+  border:1.5px solid var(--ring);background:transparent;color:var(--text);
+}
+.pill[aria-pressed="true"]{background:linear-gradient(135deg,#f97316,#ec4899);border-color:transparent;color:#fff}
+.pill:focus-visible,.k:focus-visible{outline:3px solid #fde047;outline-offset:2px}
+.screen{
+  background:var(--disp);border-radius:20px;padding:14px 18px 12px;margin-bottom:14px;
+  border:1px solid var(--ring);text-align:right;min-height:112px;display:flex;flex-direction:column;justify-content:flex-end;
+}
+#expr{color:var(--sub);font-size:1rem;font-weight:500;white-space:nowrap;overflow-x:auto;scrollbar-width:none;min-height:1.5em}
+#expr::-webkit-scrollbar{display:none}
+#res{font-size:2.6rem;font-weight:700;line-height:1.2;white-space:nowrap;overflow:hidden;font-variant-numeric:tabular-nums}
+#res.err{color:#ef4444;animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.keys{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.k{
+  height:52px;border:0;border-radius:16px;cursor:pointer;color:#fff;
+  font:600 1rem "Poppins",system-ui,sans-serif;
+  box-shadow:0 4px 0 rgba(0,0,0,.28),0 8px 14px rgba(0,0,0,.12);
+  transition:transform .08s,box-shadow .08s,filter .15s;-webkit-tap-highlight-color:transparent;
+}
+.k:hover{filter:brightness(1.1)}
+.k:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.num{background:linear-gradient(160deg,#0f9d92,#1565c0)}
+.op{background:linear-gradient(160deg,#ea580c,#c2410c);font-size:1.25rem}
+.fn{background:linear-gradient(160deg,#8b5cf6,#6d28d9);font-size:.9rem}
+.cn{background:linear-gradient(160deg,#059669,#047857)}
+.pk{background:linear-gradient(160deg,#db2777,#9d174d);font-size:.9rem}
+.ac{background:linear-gradient(160deg,#ef4444,#b91c1c)}
+.del{background:linear-gradient(160deg,#fbbf24,#f59e0b);color:#2a1245}
+.eq{grid-column:span 3;background:linear-gradient(160deg,#fde047,#f59e0b);color:#2a1245;font-size:1.5rem}
+@media (max-width:360px){.k{height:46px;font-size:.9rem}.calc{padding:14px}}
+@media (prefers-reduced-motion:reduce){.k,#res.err{transition:none;animation:none}}
+</style>
+</head>
+<body>
+<main class="calc">
+  <header>
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <defs><radialGradient id="sg" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#fff2a8"/><stop offset="1" stop-color="#f97316"/></radialGradient></defs>
+      <g stroke="#f59e0b" stroke-width="4" stroke-linecap="round">
+        <path d="M32 3v8M32 53v8M3 32h8M53 32h8M11.5 11.5l5.7 5.7M46.8 46.8l5.7 5.7M11.5 52.5l5.7-5.7M46.8 17.2l5.7-5.7"/>
+      </g>
+      <circle cx="32" cy="32" r="14" fill="url(#sg)"/>
+    </svg>
+    <div><h1>Surya's Calculator</h1><small>Scientific</small></div>
+    <div class="modes">
+      <button class="pill" id="inv" aria-pressed="false" title="Inverse trig functions">2nd</button>
+      <button class="pill" id="deg" aria-pressed="true" title="Switch degrees / radians">DEG</button>
+    </div>
+  </header>
+  <section class="screen" aria-live="polite">
+    <div id="expr">&nbsp;</div>
+    <div id="res">0</div>
+  </section>
+  <div class="keys" id="keys"></div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const exprEl = $('#expr'), res = $('#res');
+let expr = '', ans = 0, deg = true, inv = false, justEval = false;
+
+/* label, class, value, inverse label, inverse value */
+const layout = [
+  ['sin','fn','sin(','sin⁻¹','sin⁻¹('],['cos','fn','cos(','cos⁻¹','cos⁻¹('],['tan','fn','tan(','tan⁻¹','tan⁻¹('],['log','fn','log('],['ln','fn','ln('],
+  ['π','cn','π'],['e','cn','e'],['(','cn','('],[')','cn',')'],['√','fn','√('],
+  ['x²','pk','^2'],['xʸ','pk','^'],['x!','pk','!'],['%','pk','%'],['Ans','pk','Ans'],
+  ['7','num','7'],['8','num','8'],['9','num','9'],['DEL','del','DEL'],['AC','ac','AC'],
+  ['4','num','4'],['5','num','5'],['6','num','6'],['×','op','×'],['÷','op','÷'],
+  ['1','num','1'],['2','num','2'],['3','num','3'],['+','op','+'],['−','op','−'],
+  ['0','num','0'],['.','num','.'],['=','eq','=']
+];
+const keyDefs = [];
+layout.forEach(([l,c,v,il,iv]) => {
+  const b = document.createElement('button');
+  b.className = 'k ' + c; b.textContent = l; b.type = 'button';
+  b.addEventListener('click', () => press(inv && iv ? iv : v));
+  $('#keys').appendChild(b);
+  if (iv) keyDefs.push({b,l,il});
+});
+
+/* ---------- parser (no eval) ---------- */
+function tokenize(s){
+  const re = /\d+\.?\d*|\.\d+|(?:sin|cos|tan)⁻¹\(|(?:sin|cos|tan|log|ln|√)\(|Ans|π|e|[+−×÷^!%()]/y;
+  const t = []; re.lastIndex = 0;
+  while (re.lastIndex < s.length){ const m = re.exec(s); if (!m) throw 0; t.push(m[0]); }
+  return t;
+}
+function fact(n){
+  if (n < 0 || n > 170 || Math.floor(n) !== n) throw 0;
+  let r = 1; for (let i = 2; i <= n; i++) r *= i; return r;
+}
+function fn(k, v){
+  const r = x => deg ? x * Math.PI / 180 : x, d = x => deg ? x * 180 / Math.PI : x;
+  switch (k){
+    case 'sin(': return Math.sin(r(v));  case 'cos(': return Math.cos(r(v));  case 'tan(': return Math.tan(r(v));
+    case 'sin⁻¹(': return d(Math.asin(v)); case 'cos⁻¹(': return d(Math.acos(v)); case 'tan⁻¹(': return d(Math.atan(v));
+    case 'log(': return Math.log10(v); case 'ln(': return Math.log(v); case '√(': return Math.sqrt(v);
+  }
+  throw 0;
+}
+function calc(s){
+  const t = tokenize(s); let p = 0;
+  const peek = () => t[p], next = () => t[p++];
+  const starts = k => k !== undefined && (/^[\d.]/.test(k) || k === 'π' || k === 'e' || k === 'Ans' || k.endsWith('('));
+  function expression(){ let v = term(); while (peek() === '+' || peek() === '−') v = next() === '+' ? v + term() : v - term(); return v; }
+  function term(){
+    let v = unary();
+    for (;;){
+      const k = peek();
+      if (k === '×'){ next(); v *= unary(); }
+      else if (k === '÷'){ next(); v /= unary(); }
+      else if (starts(k)) v *= unary();
+      else break;
+    }
+    return v;
+  }
+  function unary(){
+    const k = peek();
+    if (k === '−'){ next(); return -unary(); }
+    if (k === '+'){ next(); return unary(); }
+    return power();
+  }
+  function power(){ const b = post(); if (peek() === '^'){ next(); return Math.pow(b, unary()); } return b; }
+  function post(){
+    let v = primary();
+    for (;;){
+      const k = peek();
+      if (k === '!'){ next(); v = fact(v); }
+      else if (k === '%'){ next(); v /= 100; }
+      else break;
+    }
+    return v;
+  }
+  function primary(){
+    const k = next();
+    if (k === undefined) throw 0;
+    if (/^[\d.]/.test(k)) return parseFloat(k);
+    if (k === 'π') return Math.PI;
+    if (k === 'e') return Math.E;
+    if (k === 'Ans') return ans;
+    if (k.endsWith('(')){
+      const v = expression();
+      if (peek() === ')') next(); else if (peek() !== undefined) throw 0;
+      return k === '(' ? v : fn(k, v);
+    }
+    throw 0;
+  }
+  const r = expression();
+  if (p < t.length) throw 0;
+  return r;
+}
+function fmt(x){
+  if (!isFinite(x)) throw 0;
+  if (Math.abs(x) < 1e-12) return '0';
+  const s = parseFloat(x.toPrecision(12)), a = Math.abs(s);
+  if (a >= 1e12 || a < 1e-6) return s.toExponential(6).replace(/\.?0+e/, 'e').replace('e+', 'e');
+  return String(s);
+}
+
+/* ---------- UI ---------- */
+function fit(){ const n = res.textContent.length; res.style.fontSize = n > 14 ? '1.5rem' : n > 11 ? '1.9rem' : n > 8 ? '2.2rem' : '2.6rem'; }
+function render(){
+  res.classList.remove('err');
+  exprEl.textContent = expr || '\u00a0';
+  exprEl.scrollLeft = exprEl.scrollWidth;
+  if (!expr) return;
+  if (/^[\d.]+$/.test(expr)) res.textContent = expr;
+  else { try { res.textContent = fmt(calc(expr)); } catch (e) {} }
+  fit();
+}
+function err(){ res.textContent = 'Error'; res.classList.remove('err'); void res.offsetWidth; res.classList.add('err'); fit(); }
+function press(v){
+  if (v === 'AC'){ expr = ''; justEval = false; exprEl.textContent = '\u00a0'; res.classList.remove('err'); res.textContent = '0'; return fit(); }
+  if (v === 'DEL'){
+    expr = expr.replace(/(?:(?:sin|cos|tan)⁻¹\(|sin\(|cos\(|tan\(|log\(|ln\(|√\(|Ans|[\s\S])$/, '');
+    if (!expr){ res.textContent = '0'; }
+    return render();
+  }
+  if (v === '='){
+    if (!expr) return;
+    try {
+      const r = calc(expr), f = fmt(r);
+      ans = r; res.classList.remove('err'); res.textContent = f; fit();
+      exprEl.textContent = expr + ' ='; expr = ''; justEval = true;
+    } catch (e) { err(); }
+    return;
+  }
+  if (justEval){ expr = /^[+−×÷^!%]/.test(v) ? 'Ans' : ''; justEval = false; }
+  expr += v;
+  render();
+}
+$('#inv').addEventListener('click', e => {
+  inv = !inv; e.currentTarget.setAttribute('aria-pressed', inv);
+  keyDefs.forEach(k => k.b.textContent = inv ? k.il : k.l);
+});
+$('#deg').addEventListener('click', e => {
+  deg = !deg; e.currentTarget.textContent = deg ? 'DEG' : 'RAD'; e.currentTarget.setAttribute('aria-pressed', deg);
+  render();
+});
+const keyMap = {'-':'−','*':'×','/':'÷','Enter':'=','=':'=','Backspace':'DEL','Escape':'AC','p':'π','s':'sin(','c':'cos(','t':'tan(','l':'log(','n':'ln(','r':'√('};
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.target.closest && e.target.closest('.pill') && e.key === 'Enter') return;
+  const k = e.key;
+  if (/^[\d.+^!%()]$/.test(k)) { press(k); e.preventDefault(); }
+  else if (keyMap[k]) { press(keyMap[k]); e.preventDefault(); }
+});
+</script>
+</body>
+</html>
